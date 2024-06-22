@@ -598,10 +598,12 @@ int TextToPhonemes(unsigned char *input) {
   X = 0;
   do {
     A = input[X] & 127;
-    if (A >= 112)
+    if (A >= 112) {
       A = A & 95;
-    else if (A >= 96)
+    }
+    else if (A >= 96) {
       A = A & 79;
+    }
     inputtemp[++X] = A;
   } while (X < 255);
   inputtemp[255] = 27;
@@ -618,12 +620,14 @@ pos36554:
         return 1;
       }
 
-      if (mem64_equalSignInRule != '.')
+      if (mem64_equalSignInRule != '.') {
         break;
+      }
       X++;
       A = tab36376[inputtemp[X]] & 1;
-      if (A != 0)
+      if (A != 0) {
         break;
+      }
       mem56_phonemeOutpos++;
       X = mem56_phonemeOutpos;
       A = '.';
@@ -635,8 +639,9 @@ pos36554:
       goto pos36700;
     }
 
-    if (mem57_currentFlags != 0)
+    if (mem57_currentFlags != 0) {
       break;
+    }
     inputtemp[X] = ' ';
     X = ++mem56_phonemeOutpos;
     if (X > 120) {
@@ -646,8 +651,9 @@ pos36554:
     input[X] = 32;
   }
 
-  if (!(mem57_currentFlags & 128))
+  if (!(mem57_currentFlags & 128)) {
     return 0;
+  }
 
   // go to the right rules for this character.
   X = mem64_equalSignInRule - 'A';
@@ -673,10 +679,12 @@ pos36700:
   Y = mem66_openBrace + 1;
 
   while (1) {
-    if (GetRuleByte(mem62, Y) != inputtemp[X])
+    if (GetRuleByte(mem62, Y) != inputtemp[X]) {
       goto pos36700;
-    if (++Y == mem65_closingBrace)
+    }
+    if (++Y == mem65_closingBrace) {
       break;
+    }
     mem60_inputMatchPos = ++X;
   }
 
@@ -694,10 +702,12 @@ pos36700:
         goto pos37184;
       }
       X = mem57_currentFlags & 127;
-      if ((tab36376[X] & 128) == 0)
+      if ((tab36376[X] & 128) == 0) {
         break;
-      if (inputtemp[mem59 - 1] != mem57_currentFlags)
+      }
+      if (inputtemp[mem59 - 1] != mem57_currentFlags) {        
         goto pos36700;
+      }
       --mem59;
     }
 
@@ -708,8 +718,9 @@ pos36700:
       switch (ch) {
       case '&':
         if (!Code37055(mem59 - 1, 16)) {
-          if (inputtemp[X] != 'H')
+          if (inputtemp[X] != 'H') {
             r = 1;
+          }
           else {
             A = inputtemp[--X];
             if ((A != 'C') && (A != 'S'))
@@ -721,17 +732,20 @@ pos36700:
       case '@':
         if (!Code37055(mem59 - 1, 4)) {
           A = inputtemp[X];
-          if (A != 72)
+          if (A != 72) {
             r = 1;
-          if ((A != 84) && (A != 67) && (A != 83))
+          }
+          if ((A != 84) && (A != 67) && (A != 83)) {
             r = 1;
+          }
         }
         break;
       case '+':
         X = mem59;
         A = inputtemp[--X];
-        if ((A != 'E') && (A != 'I') && (A != 'Y'))
+        if ((A != 'E') && (A != 'I') && (A != 'Y')) {
           r = 1;
+        }
         break;
       case ':':
         while (Code37055(mem59 - 1, 32))
@@ -742,8 +756,9 @@ pos36700:
       }
     }
 
-    if (r == 1)
+    if (r == 1) {
       goto pos36700;
+    }
 
     mem59 = X;
   }
@@ -754,14 +769,17 @@ pos36700:
       if ((tab36376[inputtemp[X + 1]] & 128) != 0) {
         A = inputtemp[++X];
         if (A == 'L') {
-          if (inputtemp[++X] != 'Y')
+          if (inputtemp[++X] != 'Y') {
             goto pos36700;
-        } else if ((A != 'R') && (A != 'S') && (A != 'D') && !match("FUL"))
+          }
+        } else if ((A != 'R') && (A != 'S') && (A != 'D') && !match("FUL")) {
           goto pos36700;
+        }
       }
     } else {
-      if (!match("ING"))
+      if (!match("ING")) {
         goto pos36700;
+      }
       mem58 = X;
     }
 
@@ -773,8 +791,9 @@ pos36700:
         if (Y == mem64_equalSignInRule) {
           mem61_inputPos = mem60_inputMatchPos;
 
-          if (debug)
+          if (debug) {
             PrintRule(mem62);
+          }
 
           while (1) {
             mem57_currentFlags = A = GetRuleByte(mem62, Y);
@@ -802,8 +821,9 @@ pos36700:
         if (A == '@') {
           if (Code37055(mem58 + 1, 4) == 0) {
             A = inputtemp[X];
-            if ((A != 82) && (A != 84) && (A != 67) && (A != 83))
+            if ((A != 82) && (A != 84) && (A != 67) && (A != 83)) {
               r = 1;
+            }
           } else {
             r = -2;
           }
@@ -815,14 +835,16 @@ pos36700:
           r = handle_ch(A, mem58 + 1);
       }
 
-      if (r == 1)
+      if (r == 1) {
         goto pos36700;
+      }
       if (r == -2) {
         r = 0;
         continue;
       }
-      if (r == 0)
+      if (r == 0) {
         mem58 = X;
+      }
     } while (r == 0);
   } while (A == '%');
   return 0;
