@@ -705,7 +705,7 @@ pos36700:
       if ((tab36376[X] & 128) == 0) {
         break;
       }
-      if (inputtemp[mem59 - 1] != mem57_currentFlags) {        
+      if (inputtemp[mem59 - 1] != mem57_currentFlags) {
         goto pos36700;
       }
       --mem59;
@@ -723,8 +723,9 @@ pos36700:
           }
           else {
             A = inputtemp[--X];
-            if ((A != 'C') && (A != 'S'))
+            if ((A != 'C') && (A != 'S')) {
               r = 1;
+            }
           }
         }
         break;
@@ -798,17 +799,20 @@ pos36700:
           while (1) {
             mem57_currentFlags = A = GetRuleByte(mem62, Y);
             A = A & 127;
-            if (A != '=')
+            if (A != '=') {
               input[++mem56_phonemeOutpos] = A;
-            if ((mem57_currentFlags & 128) != 0)
+            }
+            if ((mem57_currentFlags & 128) != 0) {
               goto pos36554;
+            }
             Y++;
           }
         }
         mem65_closingBrace = Y;
         mem57_currentFlags = GetRuleByte(mem62, Y);
-        if ((tab36376[mem57_currentFlags] & 128) == 0)
+        if ((tab36376[mem57_currentFlags] & 128) == 0) {
           break;
+        }
         if (inputtemp[mem58 + 1] != mem57_currentFlags) {
           r = 1;
           break;
