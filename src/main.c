@@ -109,7 +109,7 @@ void interpolate(unsigned char width, unsigned char table, unsigned char frame,
 void interpolate_pitch(unsigned char pos, unsigned char mem49,
                        unsigned char phase3);
 void fopen_s(FILE **f, const char *filename, const char *mode);
-void Insert(unsigned char position, unsigned char mem60, unsigned char mem59,
+void Insert(unsigned char position, unsigned char mem60_inputMatchPos, unsigned char mem59,
             unsigned char mem58);
 unsigned char trans(unsigned char a, unsigned char b);
 void InsertBreath();
@@ -158,7 +158,7 @@ void PrintRule(unsigned short offset);
 unsigned char GetRuleByte(unsigned short mem62, unsigned char Y);
 int TextToPhonemes(unsigned char *input);
 // from render.c
-void RenderSample(unsigned char *mem66, unsigned char consonantFlag,
+void RenderSample(unsigned char *mem66_openBrace, unsigned char consonantFlag,
                   unsigned char mem49);
 void Render();
 
@@ -575,17 +575,17 @@ unsigned char GetRuleByte(unsigned short mem62, unsigned char Y) {
 }
 
 int TextToPhonemes(unsigned char *input) {
-  unsigned char mem56; // output position for phonemes
-  unsigned char mem57;
+  unsigned char mem56_phonemeOutpos; // output position for phonemes
+  unsigned char mem57_currentFlags;
   unsigned char mem58;
   unsigned char mem59;
-  unsigned char mem60;
-  unsigned char mem61;
+  unsigned char mem60_inputMatchPos;
+  unsigned char mem61_inputPos;
   unsigned short mem62; // memory position of current rule
 
-  unsigned char mem64; // position of '=' or current character
-  unsigned char mem65; // position of ')'
-  unsigned char mem66; // position of '('
+  unsigned char mem64_equalSignInRule; // position of '=' or current character
+  unsigned char mem65_closingBrace; // position of ')'
+  unsigned char mem66_openBrace; // position of '('
 
   unsigned char Y;
 
@@ -605,40 +605,40 @@ int TextToPhonemes(unsigned char *input) {
     inputtemp[++X] = A;
   } while (X < 255);
   inputtemp[255] = 27;
-  mem56 = mem61 = 255;
+  mem56_phonemeOutpos = mem61_inputPos = 255;
 
 pos36554:
   while (1) {
     while (1) {
-      X = ++mem61;
-      mem64 = inputtemp[X];
-      if (mem64 == '[') {
-        X = ++mem56;
+      X = ++mem61_inputPos;
+      mem64_equalSignInRule = inputtemp[X];
+      if (mem64_equalSignInRule == '[') {
+        X = ++mem56_phonemeOutpos;
         input[X] = 155;
         return 1;
       }
 
-      if (mem64 != '.')
+      if (mem64_equalSignInRule != '.')
         break;
       X++;
       A = tab36376[inputtemp[X]] & 1;
       if (A != 0)
         break;
-      mem56++;
-      X = mem56;
+      mem56_phonemeOutpos++;
+      X = mem56_phonemeOutpos;
       A = '.';
       input[X] = '.';
     }
-    mem57 = tab36376[mem64];
-    if ((mem57 & 2) != 0) {
+    mem57_currentFlags = tab36376[mem64_equalSignInRule];
+    if ((mem57_currentFlags & 2) != 0) {
       mem62 = 37541;
       goto pos36700;
     }
 
-    if (mem57 != 0)
+    if (mem57_currentFlags != 0)
       break;
     inputtemp[X] = ' ';
-    X = ++mem56;
+    X = ++mem56_phonemeOutpos;
     if (X > 120) {
       input[X] = 155;
       return 1;
@@ -646,11 +646,11 @@ pos36554:
     input[X] = 32;
   }
 
-  if (!(mem57 & 128))
+  if (!(mem57_currentFlags & 128))
     return 0;
 
   // go to the right rules for this character.
-  X = mem64 - 'A';
+  X = mem64_equalSignInRule - 'A';
   mem62 = tab37489[X] | (tab37515[X] << 8);
 
 pos36700:
@@ -660,48 +660,48 @@ pos36700:
   Y = 0;
   while (GetRuleByte(mem62, ++Y) != '(')
     ;
-  mem66 = Y;
+  mem66_openBrace = Y;
   while (GetRuleByte(mem62, ++Y) != ')')
     ;
-  mem65 = Y;
+  mem65_closingBrace = Y;
   while ((GetRuleByte(mem62, ++Y) & 127) != '=')
     ;
-  mem64 = Y;
+  mem64_equalSignInRule = Y;
 
-  mem60 = X = mem61;
+  mem60_inputMatchPos = X = mem61_inputPos;
   // compare the string within the bracket
-  Y = mem66 + 1;
+  Y = mem66_openBrace + 1;
 
   while (1) {
     if (GetRuleByte(mem62, Y) != inputtemp[X])
       goto pos36700;
-    if (++Y == mem65)
+    if (++Y == mem65_closingBrace)
       break;
-    mem60 = ++X;
+    mem60_inputMatchPos = ++X;
   }
 
   // the string in the bracket is correct
 
-  mem59 = mem61;
+  mem59 = mem61_inputPos;
 
   while (1) {
     unsigned char ch;
     while (1) {
-      mem66--;
-      mem57 = GetRuleByte(mem62, mem66);
-      if ((mem57 & 128) != 0) {
-        mem58 = mem60;
+      mem66_openBrace--;
+      mem57_currentFlags = GetRuleByte(mem62, mem66_openBrace);
+      if ((mem57_currentFlags & 128) != 0) {
+        mem58 = mem60_inputMatchPos;
         goto pos37184;
       }
-      X = mem57 & 127;
+      X = mem57_currentFlags & 127;
       if ((tab36376[X] & 128) == 0)
         break;
-      if (inputtemp[mem59 - 1] != mem57)
+      if (inputtemp[mem59 - 1] != mem57_currentFlags)
         goto pos36700;
       --mem59;
     }
 
-    ch = mem57;
+    ch = mem57_currentFlags;
 
     r = handle_ch2(ch, mem59 - 1);
     if (r == -1) {
@@ -769,28 +769,28 @@ pos36700:
     r = 0;
     do {
       while (1) {
-        Y = mem65 + 1;
-        if (Y == mem64) {
-          mem61 = mem60;
+        Y = mem65_closingBrace + 1;
+        if (Y == mem64_equalSignInRule) {
+          mem61_inputPos = mem60_inputMatchPos;
 
           if (debug)
             PrintRule(mem62);
 
           while (1) {
-            mem57 = A = GetRuleByte(mem62, Y);
+            mem57_currentFlags = A = GetRuleByte(mem62, Y);
             A = A & 127;
             if (A != '=')
-              input[++mem56] = A;
-            if ((mem57 & 128) != 0)
+              input[++mem56_phonemeOutpos] = A;
+            if ((mem57_currentFlags & 128) != 0)
               goto pos36554;
             Y++;
           }
         }
-        mem65 = Y;
-        mem57 = GetRuleByte(mem62, Y);
-        if ((tab36376[mem57] & 128) == 0)
+        mem65_closingBrace = Y;
+        mem57_currentFlags = GetRuleByte(mem62, Y);
+        if ((tab36376[mem57_currentFlags] & 128) == 0)
           break;
-        if (inputtemp[mem58 + 1] != mem57) {
+        if (inputtemp[mem58 + 1] != mem57_currentFlags) {
           r = 1;
           break;
         }
@@ -798,7 +798,7 @@ pos36700:
       }
 
       if (r == 0) {
-        A = mem57;
+        A = mem57_currentFlags;
         if (A == '@') {
           if (Code37055(mem58 + 1, 4) == 0) {
             A = inputtemp[X];
@@ -1014,12 +1014,12 @@ int Parser1() {
   return 1;
 }
 
-void ChangeRule(unsigned char position, unsigned char mem60,
+void ChangeRule(unsigned char position, unsigned char mem60_inputMatchPos,
                 const char *descr) {
   if (debug)
     printf("RULE: %s\n", descr);
   phonemeindex[position] = 13; // rule;
-  Insert(position + 1, mem60, 0, stress[position]);
+  Insert(position + 1, mem60_inputMatchPos, 0, stress[position]);
 }
 
 // change phonemelength depedendent on stress
@@ -1066,7 +1066,7 @@ void Code41240() {
 }
 
 void Parser2() {
-  unsigned char pos = 0; // mem66;
+  unsigned char pos = 0; // mem66_openBrace;
   unsigned char p;
 
   if (debug)
@@ -1421,7 +1421,7 @@ static void RenderUnvoicedSample(unsigned short hi, unsigned char off,
 //
 // For voices samples, samples are interleaved between voiced output.
 
-void RenderSample(unsigned char *mem66, unsigned char consonantFlag,
+void RenderSample(unsigned char *mem66_openBrace, unsigned char consonantFlag,
                   unsigned char mem49) {
   // mem49 == current phoneme's index
 
@@ -1442,7 +1442,7 @@ void RenderSample(unsigned char *mem66, unsigned char consonantFlag,
   if (pitchl == 0) {
     // voiced phoneme: Z*, ZH, V*, DH
     pitchl = pitches[mem49] >> 4;
-    *mem66 = RenderVoicedSample(hi, *mem66, pitchl ^ 255);
+    *mem66_openBrace = RenderVoicedSample(hi, *mem66_openBrace, pitchl ^ 255);
   } else
     RenderUnvoicedSample(hi, pitchl ^ 255, tab48426[hibyte]);
 }
@@ -1478,7 +1478,7 @@ void ProcessFrames(unsigned char mem48) {
   unsigned char phase1 = 0;
   unsigned char phase2 = 0;
   unsigned char phase3 = 0;
-  unsigned char mem66 = 0; //!! was not initialized
+  unsigned char mem66_openBrace = 0; //!! was not initialized
 
   unsigned char Y = 0;
 
@@ -1490,7 +1490,7 @@ void ProcessFrames(unsigned char mem48) {
 
     // unvoiced sampled phoneme?
     if (flags & 248) {
-      RenderSample(&mem66, flags, Y);
+      RenderSample(&mem66_openBrace, flags, Y);
       // skip ahead two in the phoneme buffer
       Y += 2;
       mem48 -= 2;
@@ -1527,7 +1527,7 @@ void ProcessFrames(unsigned char mem48) {
         // voiced sampled phonemes interleave the sample with the
         // glottal pulse. The sample flag is non-zero, so render
         // the sample for the phoneme.
-        RenderSample(&mem66, flags, Y);
+        RenderSample(&mem66_openBrace, flags, Y);
       }
     }
 
@@ -1800,7 +1800,7 @@ int SAMMain() {
 
 void CopyStress() {
   // loop thought all the phonemes to be output
-  unsigned char pos = 0; // mem66
+  unsigned char pos = 0; // mem66_openBrace
   unsigned char Y;
   while ((Y = phonemeindex[pos]) != END) {
     // if CONSONANT_FLAG set, skip - only vowels get stress
@@ -1823,7 +1823,7 @@ void CopyStress() {
   }
 }
 
-void Insert(unsigned char position /*var57*/, unsigned char mem60,
+void Insert(unsigned char position /*var57*/, unsigned char mem60_inputMatchPos,
             unsigned char mem59, unsigned char mem58) {
   int i;
   for (i = 253; i >= position; i--) // ML : always keep last safe-guarding 255
@@ -1833,7 +1833,7 @@ void Insert(unsigned char position /*var57*/, unsigned char mem60,
     stress[i + 1] = stress[i];
   }
 
-  phonemeindex[position] = mem60;
+  phonemeindex[position] = mem60_inputMatchPos;
   phonemeLength[position] = mem59;
   stress[position] = mem58;
 }
