@@ -1,4 +1,4 @@
-OBJS = reciter.o sam.o render.o main.o debug.o
+OBJS = main.o
 
 CC = gcc
 
