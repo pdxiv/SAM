@@ -99,18 +99,13 @@ static const int timetable[5][5] = {{162, 167, 167, 127, 128},
                                     {199, 0, 0, 54, 54}};
 
 unsigned char trans(unsigned char mouth, unsigned char initialFrequency);
-static void CombineGlottalAndFormants(unsigned char phase1,
-                                      unsigned char phase2,
-                                      unsigned char phase3, unsigned char Y);
+static void CombineGlottalAndFormants(unsigned char phase1, unsigned char phase2, unsigned char phase3, unsigned char Y);
 
 void PrintUsage();
-void interpolate(unsigned char width, unsigned char table, unsigned char frame,
-                 char mem53);
-void interpolate_pitch(unsigned char pos, unsigned char mem49,
-                       unsigned char phase3);
+void interpolate(unsigned char width, unsigned char table, unsigned char frame, char mem53);
+void interpolate_pitch(unsigned char pos, unsigned char mem49, unsigned char phase3);
 void fopen_s(FILE **f, const char *filename, const char *mode);
-void Insert(unsigned char position, unsigned char mem60_inputMatchPos, unsigned char mem59,
-            unsigned char mem58);
+void Insert(unsigned char position, unsigned char mem60_inputMatchPos, unsigned char mem59, unsigned char mem58);
 unsigned char trans(unsigned char a, unsigned char b);
 void InsertBreath();
 void SetInput(unsigned char *_input);
@@ -134,11 +129,8 @@ void AddInflection(unsigned char inflection, unsigned char pos);
 unsigned char CreateTransitions();
 void ProcessFrames(unsigned char t);
 
-void PrintPhonemes(unsigned char *phonemeindex, unsigned char *phonemeLength,
-                   unsigned char *stress);
-void PrintOutput(unsigned char *flag, unsigned char *f1, unsigned char *f2,
-                 unsigned char *f3, unsigned char *a1, unsigned char *a2,
-                 unsigned char *a3, unsigned char *p);
+void PrintPhonemes(unsigned char *phonemeindex, unsigned char *phonemeLength, unsigned char *stress);
+void PrintOutput(unsigned char *flag, unsigned char *f1, unsigned char *f2, unsigned char *f3, unsigned char *a1, unsigned char *a2, unsigned char *a3, unsigned char *p);
 // from sam.c
 void SetInput(unsigned char *_input);
 void SetSpeed(unsigned char _speed);
@@ -158,8 +150,7 @@ void PrintRule(unsigned short offset);
 unsigned char GetRuleByte(unsigned short mem62, unsigned char Y);
 int TextToPhonemes(unsigned char *input);
 // from render.c
-void RenderSample(unsigned char *mem66_openBrace, unsigned char consonantFlag,
-                  unsigned char mem49);
+void RenderSample(unsigned char *mem66_openBrace, unsigned char consonantFlag, unsigned char mem49);
 void Render();
 
 void CopyStress();
@@ -367,8 +358,7 @@ void PrintUsage() {
 }
 
 // linearly interpolate values
-void interpolate(unsigned char width, unsigned char table, unsigned char frame,
-                 char mem53) {
+void interpolate(unsigned char width, unsigned char table, unsigned char frame, char mem53) {
   unsigned char sign = (mem53 < 0);
   unsigned char remainder = abs(mem53) % width;
   unsigned char div = mem53 / width;
@@ -396,8 +386,7 @@ unsigned char trans(unsigned char a, unsigned char b) {
   return (((unsigned int)a * b) >> 8) << 1;
 }
 
-void interpolate_pitch(unsigned char pos, unsigned char mem49,
-                       unsigned char phase3) {
+void interpolate_pitch(unsigned char pos, unsigned char mem49, unsigned char phase3) {
   // unlike the other values, the pitches[] interpolates from
   // the middle of the current phoneme to the middle of the
   // next phoneme
@@ -511,8 +500,7 @@ unsigned char Read(unsigned char p, unsigned char Y) {
   }
 }
 
-void PrintPhonemes(unsigned char *phonemeindex, unsigned char *phonemeLength,
-                   unsigned char *stress) {
+void PrintPhonemes(unsigned char *phonemeindex, unsigned char *phonemeLength, unsigned char *stress) {
   int i = 0;
   printf("===========================================\n");
   printf("Internal Phoneme presentation:\n\n");
@@ -533,9 +521,7 @@ void PrintPhonemes(unsigned char *phonemeindex, unsigned char *phonemeLength,
   printf("\n");
 }
 
-void PrintOutput(unsigned char *flag, unsigned char *f1, unsigned char *f2,
-                 unsigned char *f3, unsigned char *a1, unsigned char *a2,
-                 unsigned char *a3, unsigned char *p) {
+void PrintOutput(unsigned char *flag, unsigned char *f1, unsigned char *f2, unsigned char *f3, unsigned char *a1, unsigned char *a2, unsigned char *a3, unsigned char *p) {
   int i = 0;
   printf("===========================================\n");
   printf("Final data for speech output:\n\n");
@@ -577,7 +563,7 @@ unsigned char GetRuleByte(unsigned short mem62, unsigned char Y) {
 int TextToPhonemes(unsigned char *input) {
   unsigned char mem56_phonemeOutpos; // output position for phonemes
   unsigned char mem57_currentFlags;
-  unsigned char mem58;
+  unsigned char mem58 = 0;
   unsigned char mem59;
   unsigned char mem60_inputMatchPos;
   unsigned char mem61_inputPos;
@@ -590,6 +576,8 @@ int TextToPhonemes(unsigned char *input) {
   unsigned char Y;
 
   int r;
+
+  int process_rule_flag = 0;
 
   inputtemp[0] = ' ';
 
@@ -609,248 +597,300 @@ int TextToPhonemes(unsigned char *input) {
   inputtemp[255] = 27;
   mem56_phonemeOutpos = mem61_inputPos = 255;
 
-pos36554:
   while (1) {
     while (1) {
-      X = ++mem61_inputPos;
-      mem64_equalSignInRule = inputtemp[X];
-      if (mem64_equalSignInRule == '[') {
-        X = ++mem56_phonemeOutpos;
+      while (1) {
+        X = ++mem61_inputPos;
+        mem64_equalSignInRule = inputtemp[X];
+        if (mem64_equalSignInRule == '[') {
+          X = ++mem56_phonemeOutpos;
+          input[X] = 155;
+          return 1;
+        }
+
+        if (mem64_equalSignInRule != '.') {
+          break;
+        }
+        X++;
+        A = tab36376[inputtemp[X]] & 1;
+        if (A != 0) {
+          break;
+        }
+        mem56_phonemeOutpos++;
+        X = mem56_phonemeOutpos;
+        A = '.';
+        input[X] = '.';
+      }
+      mem57_currentFlags = tab36376[mem64_equalSignInRule];
+      if ((mem57_currentFlags & 2) != 0) {
+        mem62 = 37541;
+        break;
+      }
+
+      if (mem57_currentFlags != 0) {
+        break;
+      }
+      inputtemp[X] = ' ';
+      X = ++mem56_phonemeOutpos;
+      if (X > 120) {
         input[X] = 155;
         return 1;
       }
-
-      if (mem64_equalSignInRule != '.') {
-        break;
-      }
-      X++;
-      A = tab36376[inputtemp[X]] & 1;
-      if (A != 0) {
-        break;
-      }
-      mem56_phonemeOutpos++;
-      X = mem56_phonemeOutpos;
-      A = '.';
-      input[X] = '.';
-    }
-    mem57_currentFlags = tab36376[mem64_equalSignInRule];
-    if ((mem57_currentFlags & 2) != 0) {
-      mem62 = 37541;
-      goto pos36700;
+      input[X] = 32;
     }
 
-    if (mem57_currentFlags != 0) {
-      break;
-    }
-    inputtemp[X] = ' ';
-    X = ++mem56_phonemeOutpos;
-    if (X > 120) {
-      input[X] = 155;
-      return 1;
-    }
-    input[X] = 32;
-  }
-
-  if (!(mem57_currentFlags & 128)) {
-    return 0;
-  }
-
-  // go to the right rules for this character.
-  X = mem64_equalSignInRule - 'A';
-  mem62 = tab37489[X] | (tab37515[X] << 8);
-
-pos36700:
-  // find next rule
-  while ((GetRuleByte(++mem62, 0) & 128) == 0)
-    ;
-  Y = 0;
-  while (GetRuleByte(mem62, ++Y) != '(')
-    ;
-  mem66_openBrace = Y;
-  while (GetRuleByte(mem62, ++Y) != ')')
-    ;
-  mem65_closingBrace = Y;
-  while ((GetRuleByte(mem62, ++Y) & 127) != '=')
-    ;
-  mem64_equalSignInRule = Y;
-
-  mem60_inputMatchPos = X = mem61_inputPos;
-  // compare the string within the bracket
-  Y = mem66_openBrace + 1;
-
-  while (1) {
-    if (GetRuleByte(mem62, Y) != inputtemp[X]) {
-      goto pos36700;
-    }
-    if (++Y == mem65_closingBrace) {
-      break;
-    }
-    mem60_inputMatchPos = ++X;
-  }
-
-  // the string in the bracket is correct
-
-  mem59 = mem61_inputPos;
-
-  while (1) {
-    unsigned char ch;
-    while (1) {
-      mem66_openBrace--;
-      mem57_currentFlags = GetRuleByte(mem62, mem66_openBrace);
-      if ((mem57_currentFlags & 128) != 0) {
-        mem58 = mem60_inputMatchPos;
-        goto pos37184;
-      }
-      X = mem57_currentFlags & 127;
-      if ((tab36376[X] & 128) == 0) {
-        break;
-      }
-      if (inputtemp[mem59 - 1] != mem57_currentFlags) {
-        goto pos36700;
-      }
-      --mem59;
-    }
-
-    ch = mem57_currentFlags;
-
-    r = handle_ch2(ch, mem59 - 1);
-    if (r == -1) {
-      switch (ch) {
-      case '&':
-        if (!Code37055(mem59 - 1, 16)) {
-          if (inputtemp[X] != 'H') {
-            r = 1;
-          }
-          else {
-            A = inputtemp[--X];
-            if ((A != 'C') && (A != 'S')) {
-              r = 1;
-            }
-          }
-        }
-        break;
-
-      case '@':
-        if (!Code37055(mem59 - 1, 4)) {
-          A = inputtemp[X];
-          if (A != 72) {
-            r = 1;
-          }
-          if ((A != 84) && (A != 67) && (A != 83)) {
-            r = 1;
-          }
-        }
-        break;
-      case '+':
-        X = mem59;
-        A = inputtemp[--X];
-        if ((A != 'E') && (A != 'I') && (A != 'Y')) {
-          r = 1;
-        }
-        break;
-      case ':':
-        while (Code37055(mem59 - 1, 32))
-          --mem59;
-        continue;
-      default:
+    if ((mem57_currentFlags & 2) == 0) {
+      if (!(mem57_currentFlags & 128)) {
         return 0;
       }
+  
+      // go to the right rules for this character.
+      X = mem64_equalSignInRule - 'A';
+      mem62 = tab37489[X] | (tab37515[X] << 8);
     }
 
-    if (r == 1) {
-      goto pos36700;
-    }
+    while (1) {
+      // find next rule
+      while ((GetRuleByte(++mem62, 0) & 128) == 0)
+        ;
+      Y = 0;
+      while (GetRuleByte(mem62, ++Y) != '(')
+        ;
+      mem66_openBrace = Y;
+      while (GetRuleByte(mem62, ++Y) != ')')
+        ;
+      mem65_closingBrace = Y;
+      while ((GetRuleByte(mem62, ++Y) & 127) != '=')
+        ;
+      mem64_equalSignInRule = Y;
 
-    mem59 = X;
-  }
+      mem60_inputMatchPos = X = mem61_inputPos;
+      // compare the string within the bracket
+      Y = mem66_openBrace + 1;
 
-  do {
-    X = mem58 + 1;
-    if (inputtemp[X] == 'E') {
-      if ((tab36376[inputtemp[X + 1]] & 128) != 0) {
-        A = inputtemp[++X];
-        if (A == 'L') {
-          if (inputtemp[++X] != 'Y') {
-            goto pos36700;
-          }
-        } else if ((A != 'R') && (A != 'S') && (A != 'D') && !match("FUL")) {
-          goto pos36700;
-        }
-      }
-    } else {
-      if (!match("ING")) {
-        goto pos36700;
-      }
-      mem58 = X;
-    }
-
-  pos37184:
-    r = 0;
-    do {
+      int match_failed = 0;
       while (1) {
-        Y = mem65_closingBrace + 1;
-        if (Y == mem64_equalSignInRule) {
-          mem61_inputPos = mem60_inputMatchPos;
-
-          if (debug) {
-            PrintRule(mem62);
-          }
-
-          while (1) {
-            mem57_currentFlags = A = GetRuleByte(mem62, Y);
-            A = A & 127;
-            if (A != '=') {
-              input[++mem56_phonemeOutpos] = A;
-            }
-            if ((mem57_currentFlags & 128) != 0) {
-              goto pos36554;
-            }
-            Y++;
-          }
-        }
-        mem65_closingBrace = Y;
-        mem57_currentFlags = GetRuleByte(mem62, Y);
-        if ((tab36376[mem57_currentFlags] & 128) == 0) {
+        if (GetRuleByte(mem62, Y) != inputtemp[X]) {
+          match_failed = 1;
           break;
         }
-        if (inputtemp[mem58 + 1] != mem57_currentFlags) {
-          r = 1;
+        if (++Y == mem65_closingBrace) {
           break;
         }
-        ++mem58;
+        mem60_inputMatchPos = ++X;
       }
 
-      if (r == 0) {
-        A = mem57_currentFlags;
-        if (A == '@') {
-          if (Code37055(mem58 + 1, 4) == 0) {
-            A = inputtemp[X];
-            if ((A != 82) && (A != 84) && (A != 67) && (A != 83)) {
-              r = 1;
-            }
-          } else {
-            r = -2;
-          }
-        } else if (A == ':') {
-          while (Code37055(mem58 + 1, 32))
-            mem58 = X;
-          r = -2;
-        } else
-          r = handle_ch(A, mem58 + 1);
-      }
-
-      if (r == 1) {
-        goto pos36700;
-      }
-      if (r == -2) {
-        r = 0;
+      if (match_failed) {
         continue;
       }
-      if (r == 0) {
-        mem58 = X;
+
+      // the string in the bracket is correct
+
+      mem59 = mem61_inputPos;
+
+      while (1) {
+        unsigned char ch;
+        while (1) {
+          mem66_openBrace--;
+          mem57_currentFlags = GetRuleByte(mem62, mem66_openBrace);
+          if ((mem57_currentFlags & 128) != 0) {
+            mem58 = mem60_inputMatchPos;
+            process_rule_flag = 1;
+            break;
+          }
+          X = mem57_currentFlags & 127;
+          if ((tab36376[X] & 128) == 0) {
+            break;
+          }
+          if (inputtemp[mem59 - 1] != mem57_currentFlags) {
+            match_failed = 1;
+            break;
+          }
+          --mem59;
+        }
+        if (! process_rule_flag) {
+          if (match_failed) {
+            break;
+          }
+  
+          ch = mem57_currentFlags;
+  
+          r = handle_ch2(ch, mem59 - 1);
+          if (r == -1) {
+            switch (ch) {
+            case '&':
+              if (!Code37055(mem59 - 1, 16)) {
+                if (inputtemp[X] != 'H') {
+                  r = 1;
+                }
+                else {
+                  A = inputtemp[--X];
+                  if ((A != 'C') && (A != 'S')) {
+                    r = 1;
+                  }
+                }
+              }
+              break;
+  
+            case '@':
+              if (!Code37055(mem59 - 1, 4)) {
+                A = inputtemp[X];
+                if (A != 'H') {
+                  r = 1;
+                }
+                if ((A != 'T') && (A != 'C') && (A != 'S')) {
+                  r = 1;
+                }
+              }
+              break;
+            case '+':
+              X = mem59;
+              A = inputtemp[--X];
+              if ((A != 'E') && (A != 'I') && (A != 'Y')) {
+                r = 1;
+              }
+              break;
+            case ':':
+              while (Code37055(mem59 - 1, 32))
+                --mem59;
+              continue;
+            default:
+              return 0;
+            }
+          }
+  
+          if (r == 1) {
+            match_failed = 1;
+            break;
+          }
+     
+          mem59 = X;
+        } else {
+          break;
+        }
+
+        if (match_failed) {
+          continue;
+        }
       }
-    } while (r == 0);
-  } while (A == '%');
+
+      do {
+        if (! process_rule_flag) {
+          X = mem58 + 1;
+          if (inputtemp[X] == 'E') {
+            if ((tab36376[inputtemp[X + 1]] & 128) != 0) {
+              A = inputtemp[++X];
+              if (A == 'L') {
+                if (inputtemp[++X] != 'Y') {
+                  match_failed = 1;
+                  break;
+                }
+              } else if ((A != 'R') && (A != 'S') && (A != 'D') && !match("FUL")) {
+                match_failed = 1;
+                break;
+              }
+            }
+          } else {
+            if (!match("ING")) {
+              match_failed = 1;
+              break;
+            }
+            mem58 = X;
+          }
+        }
+        process_rule_flag = 0;
+
+        r = 0;
+        do {
+          while (1) {
+            Y = mem65_closingBrace + 1;
+            if (Y == mem64_equalSignInRule) {
+              mem61_inputPos = mem60_inputMatchPos;
+
+              if (debug) {
+                PrintRule(mem62);
+              }
+
+              while (1) {
+                mem57_currentFlags = A = GetRuleByte(mem62, Y);
+                A = A & 127;
+                if (A != '=') {
+                  input[++mem56_phonemeOutpos] = A;
+                }
+                if ((mem57_currentFlags & 128) != 0) {                  
+                  break; // Break out of the inner while loop
+                }
+                Y++;
+              }
+              // If we've reached this point, we need to continue the outermost loop
+              break; // Break out of the do-while loop
+            }
+            mem65_closingBrace = Y;
+            mem57_currentFlags = GetRuleByte(mem62, Y);
+            if ((tab36376[mem57_currentFlags] & 128) == 0) {
+              break;
+            }
+            if (inputtemp[mem58 + 1] != mem57_currentFlags) {
+              r = 1;
+              break;
+            }
+            ++mem58;
+          }
+
+          if (r == 0) {
+            A = mem57_currentFlags;
+            if (A == '@') {
+              if (Code37055(mem58 + 1, 4) == 0) {
+                A = inputtemp[X];
+                if ((A != 'R') && (A != 'T') && (A != 'C') && (A != 'S')) {
+                  r = 1;
+                }
+              } else {
+                r = -2;
+              }
+            } else if (A == ':') {
+              while (Code37055(mem58 + 1, 32))
+                mem58 = X;
+              r = -2;
+            } else
+              r = handle_ch(A, mem58 + 1);
+          }
+
+          if (r == 1) {
+            match_failed = 1;
+            break;
+          }
+          if (r == -2) {
+            r = 0;
+            continue;
+          }
+          if (r == 0) {
+            mem58 = X;
+          }
+        } while (r == 0 && Y != mem64_equalSignInRule);
+
+        if (match_failed) {
+          break;
+        }
+
+        if (Y == mem64_equalSignInRule) {
+          // If we've reached this point, we need to continue the outermost loop
+          break; // Break out of the do-while loop
+        }
+      } while (A == '%');
+
+      if (match_failed) {
+        continue;
+      }
+
+      // If we've reached this point, we've successfully processed the rule
+      break;
+    }
+
+    // This is where we continue the outermost loop
+    continue;
+  }
+
   return 0;
 }
 
@@ -1040,8 +1080,7 @@ int Parser1() {
   return 1;
 }
 
-void ChangeRule(unsigned char position, unsigned char mem60_inputMatchPos,
-                const char *descr) {
+void ChangeRule(unsigned char position, unsigned char mem60_inputMatchPos, const char *descr) {
   if (debug)
     printf("RULE: %s\n", descr);
   phonemeindex[position] = 13; // rule;
@@ -1361,8 +1400,7 @@ void AdjustLengths() {
   }
 }
 
-static unsigned char RenderVoicedSample(unsigned short hi, unsigned char off,
-                                        unsigned char phase1) {
+static unsigned char RenderVoicedSample(unsigned short hi, unsigned char off, unsigned char phase1) {
   do {
     unsigned char bit = 8;
     unsigned char sample = sampleTable[hi + off];
@@ -1378,8 +1416,7 @@ static unsigned char RenderVoicedSample(unsigned short hi, unsigned char off,
   return off;
 }
 
-static void RenderUnvoicedSample(unsigned short hi, unsigned char off,
-                                 unsigned char mem53) {
+static void RenderUnvoicedSample(unsigned short hi, unsigned char off, unsigned char mem53) {
   do {
     unsigned char bit = 8;
     unsigned char sample = sampleTable[hi + off];
@@ -1447,8 +1484,7 @@ static void RenderUnvoicedSample(unsigned short hi, unsigned char off,
 //
 // For voices samples, samples are interleaved between voiced output.
 
-void RenderSample(unsigned char *mem66_openBrace, unsigned char consonantFlag,
-                  unsigned char mem49) {
+void RenderSample(unsigned char *mem66_openBrace, unsigned char consonantFlag, unsigned char mem49) {
   // mem49 == current phoneme's index
 
   // mask low three bits and subtract 1 get value to
@@ -1473,9 +1509,7 @@ void RenderSample(unsigned char *mem66_openBrace, unsigned char consonantFlag,
     RenderUnvoicedSample(hi, pitchl ^ 255, tab48426[hibyte]);
 }
 
-static void CombineGlottalAndFormants(unsigned char phase1,
-                                      unsigned char phase2,
-                                      unsigned char phase3, unsigned char Y) {
+static void CombineGlottalAndFormants(unsigned char phase1, unsigned char phase2, unsigned char phase3, unsigned char Y) {
   unsigned int tmp;
 
   tmp = multtable[sinus[phase1] | amplitude1[Y]];
@@ -1849,8 +1883,7 @@ void CopyStress() {
   }
 }
 
-void Insert(unsigned char position /*var57*/, unsigned char mem60_inputMatchPos,
-            unsigned char mem59, unsigned char mem58) {
+void Insert(unsigned char position /*var57*/, unsigned char mem60_inputMatchPos, unsigned char mem59, unsigned char mem58) {
   int i;
   for (i = 253; i >= position; i--) // ML : always keep last safe-guarding 255
   {
