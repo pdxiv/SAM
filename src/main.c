@@ -182,7 +182,14 @@ void fopen_s(FILE **f, const char *filename, const char *mode) {
   *f = fopen(filename, mode);
 }
 
-static int min(int l, int r) { return l < r ? l : r; }
+static int min(int l, int r) {
+    if (l < r) {
+        return l;
+    } else {
+        return r;
+    }
+}
+
 static void strcat_s(char *dest, int size, char *str) {
   unsigned int dlen = strlen(dest);
   if (dlen >= size - 1)
@@ -643,7 +650,7 @@ int TextToPhonemes(unsigned char *input) {
       if (!(mem57_currentFlags & 128)) {
         return 0;
       }
-  
+
       // go to the right rules for this character.
       X = mem64_equalSignInRule - 'A';
       mem62 = tab37489[X] | (tab37515[X] << 8);
@@ -712,9 +719,9 @@ int TextToPhonemes(unsigned char *input) {
           if (match_failed) {
             break;
           }
-  
+
           ch = mem57_currentFlags;
-  
+
           r = handle_ch2(ch, mem59 - 1);
           if (r == -1) {
             switch (ch) {
@@ -731,7 +738,7 @@ int TextToPhonemes(unsigned char *input) {
                 }
               }
               break;
-  
+
             case '@':
               if (!Code37055(mem59 - 1, 4)) {
                 A = inputtemp[X];
@@ -758,12 +765,12 @@ int TextToPhonemes(unsigned char *input) {
               return 0;
             }
           }
-  
+
           if (r == 1) {
             match_failed = 1;
             break;
           }
-     
+
           mem59 = X;
         } else {
           break;
@@ -817,7 +824,7 @@ int TextToPhonemes(unsigned char *input) {
                 if (A != '=') {
                   input[++mem56_phonemeOutpos] = A;
                 }
-                if ((mem57_currentFlags & 128) != 0) {                  
+                if ((mem57_currentFlags & 128) != 0) {
                   break; // Break out of the inner while loop
                 }
                 Y++;
@@ -1332,8 +1339,13 @@ void AdjustLengths() {
           }
         }
       } else { // Got here if not <VOWEL>
-        unsigned short flag =
-            (index == END) ? 65 : flags[index]; // 65 if end marker
+        unsigned short flag;
+        if (index == END) {
+          flag = 65;
+        } else {
+          flag = flags[index];
+        }
+
 
         if (!(flag & FLAG_VOICED)) { // Unvoiced
           // *, .*, ?*, ,*, -*, DX, S*, SH, F*, TH, /H, /X, CH, P*, T*, K*, KX
@@ -1514,9 +1526,11 @@ static void CombineGlottalAndFormants(unsigned char phase1, unsigned char phase2
 
   tmp = multtable[sinus[phase1] | amplitude1[Y]];
   tmp += multtable[sinus[phase2] | amplitude2[Y]];
-  tmp += tmp > 255
-             ? 1
-             : 0; // if addition above overflows, we for some reason add one;
+  if (tmp > 255) {
+    tmp += 1;
+  } else {
+    tmp += 0;
+  }
   tmp += multtable[rectangle[phase3] | amplitude3[Y]];
   tmp += 136;
   tmp >>= 4; // Scale down to 0..15 range of C64 audio.
@@ -2012,8 +2026,12 @@ void rule_dipthong(unsigned char p, unsigned short pf, unsigned char pos) {
   // Example: OIL, COW
 
   // If ends with IY, use YX, else use WX
-  unsigned char A = (pf & FLAG_DIP_YX) ? 21 : 20; // 'WX' = 20 'YX' = 21
-
+  unsigned char A;
+  if (pf & FLAG_DIP_YX) {
+    A = 21;
+  } else {
+    A = 20;
+  }
   // Insert at WX or YX following, copying the stress
   if (A == 20)
     drule("insert WX following dipthong NOT ending in IY sound");
