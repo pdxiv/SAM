@@ -308,11 +308,11 @@ int main(int argc, char **argv) {
     PrintUsage();
     return 1;
   }
-
-  if (wavfilename != NULL)
+  if (wavfilename != NULL) {
     WriteWav(wavfilename, GetBuffer(), GetBufferLength() / 50);
-  else
+  } else {
     OutputSound();
+  }
 
   return 0;
 }
@@ -795,9 +795,8 @@ int TextToPhonemes(unsigned char *input) {
       }
 
       do {
-        
+
         if (! process_rule_flag) {
-          
           X = inputtemp_index + 1;
           if (inputtemp[X] == 'E') {
             if ((tab36376[inputtemp[X + 1]] & 128) != 0) {
@@ -819,11 +818,11 @@ int TextToPhonemes(unsigned char *input) {
             }
             inputtemp_index = X;
           }
-          
+
         }
         process_rule_flag = 0;
-        
-        
+
+
 
         r = 0;
         do {
@@ -1092,8 +1091,9 @@ int Parser1() {
       // Should be a stress character. Search through the
       // stress table backwards.
       match = 8; // End of stress table. FIXME: Don't hardcode.
-      while ((sign1 != stressInputTable[match]) && (match > 0))
+      while ((sign1 != stressInputTable[match]) && (match > 0)) {
         --match;
+      }
 
       if (match == 0)
         return 0; // failure
@@ -1854,10 +1854,12 @@ int SAMMain() {
   /* FIXME: At odds with assignment in Init() */
   phonemeindex[255] = 32; // to prevent buffer overflow
 
-  if (!Parser1())
+  if (!Parser1()) {
     return 0;
-  if (debug)
+  }
+  if (debug) {
     PrintPhonemes(phonemeindex, phonemeLength, stress);
+  }
   Parser2();
   CopyStress();
   SetPhonemeLength();
