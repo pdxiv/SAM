@@ -369,22 +369,25 @@ void interpolate(unsigned char width, unsigned char table, unsigned char frame, 
   unsigned char sign = (mem53 < 0);
   unsigned char remainder = abs(mem53) % width;
   unsigned char div = mem53 / width;
-
   unsigned char error = 0;
   unsigned char pos = width;
   unsigned char val = Read(table, frame) + div;
 
-  while (--pos) {
+  pos--;
+  while (pos > 0) {
     error += remainder;
     if (error >= width) { // accumulated a whole integer error, so adjust output
       error -= width;
-      if (sign)
+      if (sign) {
         val--;
-      else if (val)
+      } else if (val) {
         val++; // if input is 0, we always leave it alone
+      }
     }
-    Write(table, ++frame, val); // Write updated value back to next frame.
+    frame++;
+    Write(table, frame, val); // Write updated value back to next frame.
     val += div;
+    pos--;
   }
 }
 
