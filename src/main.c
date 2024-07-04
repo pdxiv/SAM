@@ -105,7 +105,7 @@ void PrintUsage();
 void interpolate(unsigned char width, unsigned char table, unsigned char frame, char mem53);
 void interpolate_pitch(unsigned char pos, unsigned char mem49, unsigned char phase3);
 void fopen_s(FILE **f, const char *filename, const char *mode);
-void Insert(unsigned char position, unsigned char mem60_inputMatchPos, unsigned char mem59, unsigned char mem58);
+void Insert(unsigned char position, unsigned char mem60_inputMatchPos, unsigned char mem59, unsigned char mem58_variant);
 unsigned char trans(unsigned char a, unsigned char b);
 void InsertBreath();
 void SetInput(unsigned char *_input);
@@ -570,11 +570,11 @@ unsigned char GetRuleByte(unsigned short mem62, unsigned char Y) {
 int TextToPhonemes(unsigned char *input) {
   unsigned char mem56_phonemeOutpos; // output position for phonemes
   unsigned char mem57_currentFlags;
-  unsigned char mem58 = 0;
+  unsigned char inputtemp_index = 0;
   unsigned char mem59;
   unsigned char mem60_inputMatchPos;
   unsigned char mem61_inputPos;
-  unsigned short mem62; // memory position of current rule
+  unsigned short mem62 = 0; // memory position of current rule
 
   unsigned char mem64_equalSignInRule; // position of '=' or current character
   unsigned char mem65_closingBrace; // position of ')'
@@ -655,21 +655,34 @@ int TextToPhonemes(unsigned char *input) {
       X = mem64_equalSignInRule - 'A';
       mem62 = tab37489[X] | (tab37515[X] << 8);
     }
-
     while (1) {
       // find next rule
-      while ((GetRuleByte(++mem62, 0) & 128) == 0)
-        ;
-      Y = 0;
-      while (GetRuleByte(mem62, ++Y) != '(')
-        ;
-      mem66_openBrace = Y;
-      while (GetRuleByte(mem62, ++Y) != ')')
-        ;
-      mem65_closingBrace = Y;
-      while ((GetRuleByte(mem62, ++Y) & 127) != '=')
-        ;
-      mem64_equalSignInRule = Y;
+      // Look for a byte where the 7th bit is set
+      mem62++;  // Start checking from the next position
+      while ((GetRuleByte(mem62, 0) & 128) == 0) {
+          mem62++;  // Continue searching in the next byte
+      }
+
+      // Initialize Y to search for the opening brace '('
+      Y = 1;  // Start checking from the next position
+      while (GetRuleByte(mem62, Y) != '(') {
+          Y++;  // Increment Y until '(' is found
+      }
+      mem66_openBrace = Y; // Store the position of '('
+
+      // Look for the closing brace ')'
+      Y++;  // Start checking from the next position
+      while (GetRuleByte(mem62, Y) != ')') {
+          Y++;  // Increment Y until ')' is found
+      }
+      mem65_closingBrace = Y; // Store the position of ')'
+
+      // Look for the '=' sign, taking into account 127 mask
+      Y++;  // Start checking from the next position
+      while ((GetRuleByte(mem62, Y) & 127) != '=') {
+          Y++;  // Increment Y until '=' is found
+      }
+      mem64_equalSignInRule = Y; // Store the position of '='
 
       mem60_inputMatchPos = X = mem61_inputPos;
       // compare the string within the bracket
@@ -701,7 +714,7 @@ int TextToPhonemes(unsigned char *input) {
           mem66_openBrace--;
           mem57_currentFlags = GetRuleByte(mem62, mem66_openBrace);
           if ((mem57_currentFlags & 128) != 0) {
-            mem58 = mem60_inputMatchPos;
+            inputtemp_index = mem60_inputMatchPos;
             process_rule_flag = 1;
             break;
           }
@@ -782,8 +795,10 @@ int TextToPhonemes(unsigned char *input) {
       }
 
       do {
+        
         if (! process_rule_flag) {
-          X = mem58 + 1;
+          
+          X = inputtemp_index + 1;
           if (inputtemp[X] == 'E') {
             if ((tab36376[inputtemp[X + 1]] & 128) != 0) {
               A = inputtemp[++X];
@@ -802,10 +817,13 @@ int TextToPhonemes(unsigned char *input) {
               match_failed = 1;
               break;
             }
-            mem58 = X;
+            inputtemp_index = X;
           }
+          
         }
         process_rule_flag = 0;
+        
+        
 
         r = 0;
         do {
@@ -837,17 +855,17 @@ int TextToPhonemes(unsigned char *input) {
             if ((tab36376[mem57_currentFlags] & 128) == 0) {
               break;
             }
-            if (inputtemp[mem58 + 1] != mem57_currentFlags) {
+            if (inputtemp[inputtemp_index + 1] != mem57_currentFlags) {
               r = 1;
               break;
             }
-            ++mem58;
+            ++inputtemp_index;
           }
 
           if (r == 0) {
             A = mem57_currentFlags;
             if (A == '@') {
-              if (Code37055(mem58 + 1, 4) == 0) {
+              if (Code37055(inputtemp_index + 1, 4) == 0) {
                 A = inputtemp[X];
                 if ((A != 'R') && (A != 'T') && (A != 'C') && (A != 'S')) {
                   r = 1;
@@ -856,11 +874,12 @@ int TextToPhonemes(unsigned char *input) {
                 r = -2;
               }
             } else if (A == ':') {
-              while (Code37055(mem58 + 1, 32))
-                mem58 = X;
+              while (Code37055(inputtemp_index + 1, 32))
+                inputtemp_index = X;
               r = -2;
-            } else
-              r = handle_ch(A, mem58 + 1);
+            } else {
+              r = handle_ch(A, inputtemp_index + 1);
+            }
           }
 
           if (r == 1) {
@@ -872,7 +891,7 @@ int TextToPhonemes(unsigned char *input) {
             continue;
           }
           if (r == 0) {
-            mem58 = X;
+            inputtemp_index = X;
           }
         } while (r == 0 && Y != mem64_equalSignInRule);
 
@@ -884,6 +903,7 @@ int TextToPhonemes(unsigned char *input) {
           // If we've reached this point, we need to continue the outermost loop
           break; // Break out of the do-while loop
         }
+
       } while (A == '%');
 
       if (match_failed) {
@@ -1897,7 +1917,7 @@ void CopyStress() {
   }
 }
 
-void Insert(unsigned char position /*var57*/, unsigned char mem60_inputMatchPos, unsigned char mem59, unsigned char mem58) {
+void Insert(unsigned char position /*var57*/, unsigned char mem60_inputMatchPos, unsigned char mem59, unsigned char mem58_variant) {
   int i;
   for (i = 253; i >= position; i--) // ML : always keep last safe-guarding 255
   {
@@ -1908,7 +1928,7 @@ void Insert(unsigned char position /*var57*/, unsigned char mem60_inputMatchPos,
 
   phonemeindex[position] = mem60_inputMatchPos;
   phonemeLength[position] = mem59;
-  stress[position] = mem58;
+  stress[position] = mem58_variant;
 }
 
 void InsertBreath() {
