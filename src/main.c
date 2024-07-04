@@ -425,8 +425,9 @@ unsigned char CreateTransitions() {
     unsigned char phoneme = phonemeIndexOutput[pos];
     unsigned char next_phoneme = phonemeIndexOutput[pos + 1];
 
-    if (next_phoneme == 255)
+    if (next_phoneme == 255) {
       break; // 255 == end_token
+    }
 
     // get the ranking of each phoneme
     next_rank = blendRank[next_phoneme];
@@ -1797,19 +1798,20 @@ void AddInflection(unsigned char inflection, unsigned char pos) {
 void Render() {
   unsigned char t;
 
-  if (phonemeIndexOutput[0] == 255)
+  if (phonemeIndexOutput[0] == 255) {
     return; // exit if no data
+  }
 
   CreateFrames();
   t = CreateTransitions();
 
-  if (!singmode)
+  if (!singmode) {
     AssignPitchContour();
+  }
   RescaleAmplitude();
 
   if (debug) {
-    PrintOutput(sampledConsonantFlag, frequency1, frequency2, frequency3,
-                amplitude1, amplitude2, amplitude3, pitches);
+    PrintOutput(sampledConsonantFlag, frequency1, frequency2, frequency3, amplitude1, amplitude2, amplitude3, pitches);
   }
 
   ProcessFrames(t);
