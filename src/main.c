@@ -1833,7 +1833,10 @@ void SetMouth(unsigned char _mouth) { mouth = _mouth; }
 void SetThroat(unsigned char _throat) { throat = _throat; }
 void EnableSingmode() { singmode = 1; }
 char *GetBuffer() { return buffer; }
-int GetBufferLength() { return bufferpos; }
+
+int GetBufferLength() {
+  return bufferpos;
+}
 
 void Init() {
   int i;
@@ -2172,6 +2175,7 @@ void WriteWav(char *filename, char *buffer, int bufferlength) {
   fwrite(buffer, bufferlength, 1, file);
 
   fclose(file);
+
 }
 
 #ifdef USESDL
