@@ -1827,12 +1827,29 @@ void SetInput(unsigned char *_input) {
   input[l] = 0;
 }
 
-void SetSpeed(unsigned char _speed) { speed = _speed; }
-void SetPitch(unsigned char _pitch) { pitch = _pitch; }
-void SetMouth(unsigned char _mouth) { mouth = _mouth; }
-void SetThroat(unsigned char _throat) { throat = _throat; }
-void EnableSingmode() { singmode = 1; }
-char *GetBuffer() { return buffer; }
+void SetSpeed(unsigned char _speed) {
+  speed = _speed;
+}
+
+void SetPitch(unsigned char _pitch) {
+  pitch = _pitch;
+}
+
+void SetMouth(unsigned char _mouth) {
+  mouth = _mouth;
+}
+
+void SetThroat(unsigned char _throat) {
+  throat = _throat;
+}
+
+void EnableSingmode() {
+  singmode = 1;
+}
+
+char *GetBuffer() {
+  return buffer;
+}
 
 int GetBufferLength() {
   return bufferpos;
