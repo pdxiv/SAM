@@ -1122,8 +1122,7 @@ void SetPhonemeLength() {
     if ((A == 0) || ((A & 128) != 0)) {
       phonemeLength[position] = phonemeLengthTable[phonemeindex[position]];
     } else {
-      phonemeLength[position] =
-          phonemeStressedLengthTable[phonemeindex[position]];
+      phonemeLength[position] = phonemeStressedLengthTable[phonemeindex[position]];
     }
     position++;
   }
@@ -1311,8 +1310,14 @@ void AdjustLengths() {
 
       loopIndex = X;
 
-      while (--X && !(flags[phonemeindex[X]] & FLAG_VOWEL))
-        ; // back up while not a vowel
+      // Back up to the first vowel
+      while (X > 0) {
+          X--;  // Decrement X
+          if (flags[phonemeindex[X]] & FLAG_VOWEL) {
+              break;  // Exit the loop if a vowel is found
+          }
+      }
+
       if (X == 0)
         break;
 
@@ -1321,13 +1326,10 @@ void AdjustLengths() {
         index = phonemeindex[X];
 
         // test for fricative/unvoiced or not voiced
-        if (!(flags[index] & FLAG_FRICATIVE) ||
-            (flags[index] & FLAG_VOICED)) { // nochmal �berpr�fen
+        if (!(flags[index] & FLAG_FRICATIVE) || (flags[index] & FLAG_VOICED)) { // nochmal �berpr�fen
           unsigned char A = phonemeLength[X];
           // change phoneme length to (length * 1.5) + 1
-          drule_pre("Lengthen <FRICATIVE> or <VOICED> between <VOWEL> and "
-                    "<PUNCTUATION> by 1.5",
-                    X);
+          drule_pre("Lengthen <FRICATIVE> or <VOICED> between <VOWEL> and <PUNCTUATION> by 1.5", X);
           phonemeLength[X] = (A >> 1) + A + 1;
           drule_post(X);
         }
@@ -1654,13 +1656,15 @@ static void CreateFrames() {
     unsigned phase2;
 
     // if terminal phoneme, exit the loop
-    if (phoneme == 255)
+    if (phoneme == 255) {
       break;
+    }
 
-    if (phoneme == PHONEME_PERIOD)
+    if (phoneme == PHONEME_PERIOD) {
       AddInflection(RISING_INFLECTION, X);
-    else if (phoneme == PHONEME_QUESTION)
+    } else if (phoneme == PHONEME_QUESTION) {
       AddInflection(FALLING_INFLECTION, X);
+    }
 
     // get the stress amount (more stress = higher pitch)
     phase1 = tab47492[stressOutput[i] + 1];
@@ -1679,6 +1683,7 @@ static void CreateFrames() {
       sampledConsonantFlag[X] =
           sampledConsonantFlags[phoneme]; // phoneme data for sampled consonants
       pitches[X] = pitch + phase1;        // pitch
+
       ++X;
     } while (--phase2 != 0);
 
@@ -1875,7 +1880,6 @@ int SAMMain() {
 
   if (debug)
     PrintPhonemes(phonemeindex, phonemeLength, stress);
-
   PrepareOutput();
   return 1;
 }
@@ -2100,14 +2104,16 @@ void SetMouthThroat(unsigned char mouth, unsigned char throat) {
   while (pos < 30) {
     // recalculate mouth frequency
     unsigned char initialFrequency = mouthFormants5_29[pos];
-    if (initialFrequency != 0)
+    if (initialFrequency != 0) {
       newFrequency = trans(mouth, initialFrequency);
+    }
     freq1data[pos] = newFrequency;
 
     // recalculate throat frequency
     initialFrequency = throatFormants5_29[pos];
-    if (initialFrequency != 0)
+    if (initialFrequency != 0) {
       newFrequency = trans(throat, initialFrequency);
+    }
     freq2data[pos] = newFrequency;
     pos++;
   }
